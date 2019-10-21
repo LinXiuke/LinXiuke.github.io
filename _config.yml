@@ -3,10 +3,10 @@ theme: texture
 
 title: LinXiuke的博客
 author: LinXiuke
-email: your-email@domain.com
+email: linxiuke@outlook.com
 description:
 show_excerpts: true # set to true to show excerpts on the homepage
-baseurl: LinXiuke.github.io
+baseurl:
 
 repository: LinXiuke/LinXiuke.github.io
 github_url: https://github.com/LinXiuke
