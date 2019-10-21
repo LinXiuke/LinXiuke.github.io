@@ -1,12 +1,12 @@
 remote_theme: thelehhman/texture
 theme: texture
 
-title: Linxk的博客
+title: LinXiuke的博客
 author: LinXiuke
 email: your-email@domain.com
 description:
 show_excerpts: true # set to true to show excerpts on the homepage
-baseurl: /texture
+baseurl: LinXiuke.github.io
 
 repository: LinXiuke/LinXiuke.github.io
 github_url: https://github.com/LinXiuke
@@ -19,7 +19,7 @@ sass:
 
 permalink: /posts/:title/
 texture:
-  title: Adam Denisov
+  title: LinXiuke的博客
   tagline: Developer. Designer
   date_format: "%b %-d, %Y"
   style: black
