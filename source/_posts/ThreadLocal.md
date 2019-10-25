@@ -5,7 +5,7 @@ categories:
 - Java
 
 tags:
-- Thread
+- 线程
 ---
 
 ThreadLocal是一个关于创建线程局部变量的类。
