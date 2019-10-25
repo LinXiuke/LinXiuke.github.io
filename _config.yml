@@ -1,14 +1,12 @@
 # Hexo Configuration
-## Docs: https://hexo.io/docs/configuration.html
-## Source: https://github.com/hexojs/hexo/
 
 # Site
 title: 魔法学院
-subtitle:
+subtitle: 九又四分之三站台
 description: 科学技术才是第一生产力
 keywords:
 author: linxk
-language: en
+language: zh-Hans
 timezone:
 
 # URL
@@ -84,7 +82,7 @@ pagination_dir: page
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: landscape
+theme: next
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html

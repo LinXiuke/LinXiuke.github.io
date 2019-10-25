@@ -1,7 +1,11 @@
 ---
 title: ThreadLocal
 
-date: 2019-01-01
+categories: 
+- Java
+
+tags:
+- Thread
 ---
 
 ThreadLocal是一个关于创建线程局部变量的类。
