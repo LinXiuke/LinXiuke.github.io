@@ -1,6 +1,6 @@
 ---
 title: synchronized和Condition实现生产者和消费者
-
+date: 2019-07-02
 categories: 
 - Java
 

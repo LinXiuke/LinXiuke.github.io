@@ -1,6 +1,6 @@
 ---
 title: JDK动态代理
-
+date: 2018-09-11
 categories: 
 - Java
 

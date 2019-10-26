@@ -1,6 +1,8 @@
 ---
 title: CGlib动态代理
 
+date: 2019-01-20
+
 categories: 
 - Java
 

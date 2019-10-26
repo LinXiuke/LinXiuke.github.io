@@ -1,6 +1,6 @@
 ---
 title: ThreadLocal
-
+date: 2018-10-25
 categories: 
 - Java
 
