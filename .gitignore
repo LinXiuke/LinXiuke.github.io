@@ -6,4 +6,5 @@ node_modules/
 public/
 .deploy*/
 .idea
-*.json
+db.json
+themes/landscape/package.json
