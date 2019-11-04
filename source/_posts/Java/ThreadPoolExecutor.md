@@ -62,17 +62,17 @@ SingleThreadExecutor的execute()方法
 3. 线程执行完1中的任务后，会在一个无限循环中反复从LinkedBlockingQueue获取任务来完成。
  
 
-## 3. **CacheThreaPool**
+## 3. **CacheThreadPool**
 
-CacheThreaPool是一个会根据需要创建新线程的线程池。下面是创建CacheThreaPool的源码。
+CacheThreadPool是一个会根据需要创建新线程的线程池。下面是创建CacheThreadPool的源码。
 
 ```
 public static ExecutorService newCachedThreadPool() {
     return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 }
 ```
-CacheThreaPool的corePoolSize被设置为0，即corePool为空，maximumPoolSize设置为Integer.MAX_VALUE，表示maximumPool是无界的。
-CacheThreaPool使用的是没有容量的SynchronousQueue作为线程池的工资队列，但是maximumPool是无界的，这意味着当主线程提交任务的速度高于maximumPool中线程处理任务的速度时，CacheThreaPool会不断创建新的线程，极端情况下，CacheThreaPool会耗尽CPU和内存资源。
+CacheThreadPool的corePoolSize被设置为0，即corePool为空，maximumPoolSize设置为Integer.MAX_VALUE，表示maximumPool是无界的。
+CacheThreadPool使用的是没有容量的SynchronousQueue作为线程池的工资队列，但是maximumPool是无界的，这意味着当主线程提交任务的速度高于maximumPool中线程处理任务的速度时，CacheThreadPool会不断创建新的线程，极端情况下，CacheThreadPool会耗尽CPU和内存资源。
 
 
 ## ScheduledThreadPoolExecutor
