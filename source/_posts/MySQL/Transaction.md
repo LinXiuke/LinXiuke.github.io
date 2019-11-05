@@ -1,7 +1,7 @@
 ---
 title: 事务
 
-date: 2019-10-31
+date: 2019-11-05
 
 categories: 
 - MySQL
@@ -12,7 +12,7 @@ tags:
 
 ## 什么是事务
 
-简单的说，事务就是一组原子性的SQL，这一组 SQL 要么全部执行成功，要么全部执行失败。
+简单的说，事务就是一组原子性的SQL操作（insert，update，delete），这一组 SQL 要么全部执行成功，要么全部执行失败。
 
 一般来说，事务是必须满足4个条件（ACID）：：原子性（Atomicity，或称不可分割性）、一致性（Consistency）、隔离性（Isolation，又称独立性）、持久性（Durability）。
 

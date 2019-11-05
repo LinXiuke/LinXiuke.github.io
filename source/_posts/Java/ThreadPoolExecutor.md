@@ -8,6 +8,7 @@ tags:
 - 线程
 ---
 
+## 概述
 
 ThreadPoolExecutor是Executor框架最核心的类，也是线程池的实现类，有以下4个组件构成。
 
@@ -25,7 +26,7 @@ ThreadPoolExecutor是Executor框架最核心的类，也是线程池的实现类
 3. CacheThreadPool
 
 
-## 1. **FixedThreadPool**
+## **FixedThreadPool**
 
 FixedThreadPool被称为可重用固定线程数的线程池
 
@@ -44,7 +45,7 @@ new  ThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTim
 当线程池的线程数大于corePoolSize的时候，keepAliveTime为多余的空闲线程等待任务的最长时间，超过时间后多余的线程被终止。FixedThreadPool的创建中把keepAliveTime为多余的空闲线程等待任务的最长时间设置为0L表示多余的空闲线程立即被终止。
 
 
-## 2.**SingleThreadExecutor**
+## **SingleThreadExecutor**
 
 SingleThreadExecutor是使用单个worker线程的Executor，下面是SingleThreadExecutor的源码实现
 
@@ -62,7 +63,7 @@ SingleThreadExecutor的execute()方法
 3. 线程执行完1中的任务后，会在一个无限循环中反复从LinkedBlockingQueue获取任务来完成。
  
 
-## 3. **CacheThreadPool**
+## **CacheThreadPool**
 
 CacheThreadPool是一个会根据需要创建新线程的线程池。下面是创建CacheThreadPool的源码。
 
