@@ -13,7 +13,7 @@ tags:
 Feign是一个声明式的伪Http客户端，使用Feign，只需要创建一个接口并注解。Feign默认集成了Ribbon，并和Eureka结合，默认实现了负载均衡的效果。
 
 - Feign采用基于接口的注解
-- Feign整合了Ribbon，具有负债均衡能力
+- Feign整合了Ribbon，具有负载均衡能力
 - 整合了Hystrix，具有熔断能力
 
 <!--more-->
