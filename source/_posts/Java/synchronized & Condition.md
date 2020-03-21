@@ -6,7 +6,7 @@ categories:
 - Java
 
 tags:
-- 线程
+- 并发
 ---
 # 使用synchronized和Condition分别实现生产者和消费者的消息队列
 ## synchronized实现

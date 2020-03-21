@@ -5,7 +5,7 @@ categories:
 - Java
 
 tags:
-- 线程
+- 并发
 ---
 
 Java 通过 ThreadPoolExecutor 提供的3个submit()方法和FutureTask来获取多线程任务结果

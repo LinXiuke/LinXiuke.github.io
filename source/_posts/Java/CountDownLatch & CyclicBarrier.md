@@ -5,7 +5,6 @@ categories:
 - Java
 
 tags:
-- 线程
 - 并发
 ---
 
