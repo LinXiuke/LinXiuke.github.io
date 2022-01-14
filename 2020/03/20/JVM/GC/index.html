@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.4.2',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="概述垃圾收集（Garbage Collection， GC）， 诞生于1960年 MIT 的 Lisp 语言。 程序计数器，虚拟机栈，本地方法栈3个区域岁线程而生，随线程而灭；栈中的栈桢随着方法的进入和退出而有条不紊地执行者出栈和入栈的操作，实现了内存的自动清理。因此，我们的内存垃圾回收主要集中于java堆和方法区中，在程序运行期间，这部分内存的分配和使用都是动态的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GC算法（补充）">
+<meta property="og:url" content="https://github.com/2020/03/20/JVM/GC/index.html">
+<meta property="og:site_name" content="魔法学院">
+<meta property="og:description" content="概述垃圾收集（Garbage Collection， GC）， 诞生于1960年 MIT 的 Lisp 语言。 程序计数器，虚拟机栈，本地方法栈3个区域岁线程而生，随线程而灭；栈中的栈桢随着方法的进入和退出而有条不紊地执行者出栈和入栈的操作，实现了内存的自动清理。因此，我们的内存垃圾回收主要集中于java堆和方法区中，在程序运行期间，这部分内存的分配和使用都是动态的。">
+<meta property="article:published_time" content="2020-03-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-14T14:55:53.410Z">
+<meta property="article:author" content="linxk">
+<meta property="article:tag" content="GC">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/2020/03/20/JVM/GC/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>GC算法（补充） | 魔法学院</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">魔法学院</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">九又四分之三站台</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://github.com/2020/03/20/JVM/GC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="linxk">
+      <meta itemprop="description" content="科学技术才是第一生产力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔法学院">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          GC算法（补充）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-20 00:00:00" itemprop="dateCreated datePublished" datetime="2020-03-20T00:00:00+08:00">2020-03-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>垃圾收集（Garbage Collection， GC）， 诞生于1960年 MIT 的 Lisp 语言。</p>
+<p>程序计数器，虚拟机栈，本地方法栈3个区域岁线程而生，随线程而灭；栈中的栈桢随着方法的进入和退出而有条不紊地执行者出栈和入栈的操作，实现了内存的自动清理。因此，我们的内存垃圾回收主要集中于java堆和方法区中，在程序运行期间，这部分内存的分配和使用都是动态的。</p>
+<a id="more"></a>
+<h2 id="对象已死？"><a href="#对象已死？" class="headerlink" title="对象已死？"></a>对象已死？</h2><p>如何判断一个对象是否存活</p>
+<h3 id="引用计数法"><a href="#引用计数法" class="headerlink" title="引用计数法"></a>引用计数法</h3><p>给对象添加一个引用计数器，每当有一个地方引用它时，计数器值就加1，引用失效时计数器值就减1，当计数器值为0时就可以回收。 但是这种方法无法解决循环引用的问题</p>
+<h3 id="可达性分析（Reachability-Analysis）"><a href="#可达性分析（Reachability-Analysis）" class="headerlink" title="可达性分析（Reachability Analysis）"></a>可达性分析（Reachability Analysis）</h3><p>从GC roots的对象开始往下搜索，搜索走过的路径称为引用链，当一个对象到GC roots没有任何引用链可以到达时，该对象就是不可用的</p>
+<p>在Java语言中，GC roots包括</p>
+<ol>
+<li>虚拟机栈（栈桢中的本地变量表）表引用的对象</li>
+<li>方法区中类静态属性引用的对象</li>
+<li>方法区中常量引用的对象</li>
+<li>本地方法栈中JNI（Native方法）引用的对象</li>
+</ol>
+<h2 id="垃圾收集器算法"><a href="#垃圾收集器算法" class="headerlink" title="垃圾收集器算法"></a>垃圾收集器算法</h2><h3 id="标记-清除算法"><a href="#标记-清除算法" class="headerlink" title="标记-清除算法"></a>标记-清除算法</h3><p>算法分为“标记”，“清除”两个阶段：首先标记出所有需要回收的对象，在标记完成后统一回收所有被标记的对象。</p>
+<p>缺点： 一是效率问题，标记和清除两个过程的效率都不高；二是空间问题，标记清除后会产生大量不连续的内存碎片，空间碎片太多可能导致在需要分配较大对象时无法找到足够的连续内存而不得不提前触发一次垃圾收集</p>
+<h3 id="复制算法"><a href="#复制算法" class="headerlink" title="复制算法"></a>复制算法</h3><p>“复制”（Copying）的收集算法，它将可用内存按容量划分为大小相等的两块，每次只使用其中的一块。当这一块的内存用完了，就将还存活着的对象复制到另外一块上面，然后再把已使用过的内存空间一次清理掉。</p>
+<p>这样使得每次都是对其中的一块进行内存回收，内存分配时也就不用考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。只是这种算法的代价是将内存缩小为原来的一半，持续复制长生存期的对象则导致效率降低。</p>
+<h3 id="标记-压缩算法"><a href="#标记-压缩算法" class="headerlink" title="标记-压缩算法"></a>标记-压缩算法</h3><p>复制算法在对象存活率比较高时要执行较多的复制操作，效率会降低，而且空间使用率较低，在老年代中一般不能直接使用。</p>
+<p>根据老年代的特点，有人提出了另外一种“标记-整理”（Mark-Compact）算法，“标记”过程与“标记-清除”算法的“标记”过程一样，但后续操作不是清除，而是让所有存活的对象往一端移动，然后清理端边界以外的内存。</p>
+<h3 id="分代收集算法"><a href="#分代收集算法" class="headerlink" title="分代收集算法"></a>分代收集算法</h3><h4 id="描述"><a href="#描述" class="headerlink" title="描述"></a>描述</h4><p>GC分代的基本假设：绝大多数的对象生命周期都非常短暂</p>
+<p>“分代收集”（Generational Collection）算法，与其说是一种算法,倒不如说是一种选择，一种策略。“分代收集”把Java堆分为新生代和老年代，这样可以根据各个年代的特点分别采取最适合的垃圾收集算法。新生代中每次垃圾收集时都有大量对象死去，采用“复制”算法。老年代中对象生存率较高，没有额外空间对它进行分配担保，采用“标记-清除”或者“标记-压缩”算法进行回收。</p>
+<p>新生代分为Eden区和和两个Survivor区（S1和S2），比例分别为8:1:1，这样就可以根据新老生代的特点选择最合适的垃圾回收算法，新生代的GC也称为MinorGC，老年代的GC称为Full GC。</p>
+<h4 id="对象在新生代的分配与回收"><a href="#对象在新生代的分配与回收" class="headerlink" title="对象在新生代的分配与回收"></a>对象在新生代的分配与回收</h4><p>大部分对象在很短的时间内都会被回收，对象一般分配在Eden区，当Eden区将满时，会发动一次Minor GC。这个时候JVM会将不需要回收的对象标记出来，复制到S1，将剩下的对象回收。移动到S1的对象年龄+1（年龄即经历的Minor GC的次数）</p>
+<p>下一次发动MinorGC时，会将Eden区和S1区不需要回收的对象复制到S2区，对象年龄+1，然后清除Eden和S2的对象。</p>
+<p>新生代采用的是复制算法，因为只有极少数对象会存活下来，所以Eden和Survivor的比例是8:1:1.</p>
+<h4 id="对象晋升老年代"><a href="#对象晋升老年代" class="headerlink" title="对象晋升老年代"></a>对象晋升老年代</h4><ul>
+<li>当对象的年龄到达设定的阈值后，会从Survivor晋升到老年代</li>
+<li>大对象分配内存时，会直接在老年代，因为大对象如果分配在Eden复制到Survivor会占用比较大的开销，而且Survivor也容易被占满</li>
+<li>在Survivor区相同年龄的对象所占内存之和大于所在区的一半时，则年龄大于或等于该年龄的所有对象晋升到老年代</li>
+</ul>
+<h4 id="空间分配担保"><a href="#空间分配担保" class="headerlink" title="空间分配担保"></a>空间分配担保</h4><p>在发生 MinorGC 之前，虚拟机会先检查老年代最大可用的连续空间是否大于新生代所有对象的总空间，如果大于，那么Minor GC 可以确保是安全的,如果不大于，那么虚拟机会查看 HandlePromotionFailure 设置值是否允许担保失败。如果允许，那么会继续检查老年代最大可用连续空间是否大于历次晋升到老年代对象的平均大小，如果大于则进行Minor GC，如果小于或者不允许冒险则进行一次Full GC。</p>
+<h4 id="老年代的GC"><a href="#老年代的GC" class="headerlink" title="老年代的GC"></a>老年代的GC</h4><p>一般 Full GC 会导致工作线程停顿时间过长（因为Full GC会清理整个堆中的不可用对象，一般要花较长的时间），如果在此 server 收到了很多请求，则会被拒绝服务！</p>
+<p> Minor GC 用的是复制算法，而在老生代由于对象比较多，占用的空间较大，使用复制算法会有较大开销（复制算法在对象存活率较高时要进行多次复制操作，同时浪费一半空间）所以根据老生代特点，在老年代进行的 GC 一般采用的是标记整理法来进行回收。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/GC/" rel="tag"># GC</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+                <a href="/2020/02/29/Redis/Redis/" rel="next" title="Redis">
+                  <i class="fa fa-chevron-left"></i> Redis
+                </a>
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+                <a href="/2020/03/24/MySQL/MySQL_log/" rel="prev" title="MySQL事务日志">
+                  MySQL事务日志 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对象已死？"><span class="nav-number">2.</span> <span class="nav-text">对象已死？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#引用计数法"><span class="nav-number">2.1.</span> <span class="nav-text">引用计数法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#可达性分析（Reachability-Analysis）"><span class="nav-number">2.2.</span> <span class="nav-text">可达性分析（Reachability Analysis）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#垃圾收集器算法"><span class="nav-number">3.</span> <span class="nav-text">垃圾收集器算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#标记-清除算法"><span class="nav-number">3.1.</span> <span class="nav-text">标记-清除算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#复制算法"><span class="nav-number">3.2.</span> <span class="nav-text">复制算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#标记-压缩算法"><span class="nav-number">3.3.</span> <span class="nav-text">标记-压缩算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分代收集算法"><span class="nav-number">3.4.</span> <span class="nav-text">分代收集算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#描述"><span class="nav-number">3.4.1.</span> <span class="nav-text">描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#对象在新生代的分配与回收"><span class="nav-number">3.4.2.</span> <span class="nav-text">对象在新生代的分配与回收</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#对象晋升老年代"><span class="nav-number">3.4.3.</span> <span class="nav-text">对象晋升老年代</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#空间分配担保"><span class="nav-number">3.4.4.</span> <span class="nav-text">空间分配担保</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#老年代的GC"><span class="nav-number">3.4.5.</span> <span class="nav-text">老年代的GC</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <img class="site-author-image" itemprop="image" alt="linxk"
+    src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">linxk</p>
+  <div class="site-description" itemprop="description">科学技术才是第一生产力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">linxk</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">106k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.4.2
+  </div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

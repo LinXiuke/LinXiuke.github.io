@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.4.2',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="简介为了方便各服务的配置文件统一管理，需要分布式配置中心组件。在spring cloud中有spring cloud config组件用于统一配置，它支持配置文件加载在内存中，也支持远程git仓库配置。在组件中，分为配置的服务者和消费者。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Cloud Config">
+<meta property="og:url" content="https://github.com/2019/12/02/Spring%20Cloud/config/index.html">
+<meta property="og:site_name" content="魔法学院">
+<meta property="og:description" content="简介为了方便各服务的配置文件统一管理，需要分布式配置中心组件。在spring cloud中有spring cloud config组件用于统一配置，它支持配置文件加载在内存中，也支持远程git仓库配置。在组件中，分为配置的服务者和消费者。">
+<meta property="article:published_time" content="2019-12-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-14T14:55:53.430Z">
+<meta property="article:author" content="linxk">
+<meta property="article:tag" content="教程">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/2019/12/02/Spring%20Cloud/config/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Spring Cloud Config | 魔法学院</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">魔法学院</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">九又四分之三站台</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://github.com/2019/12/02/Spring%20Cloud/config/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="linxk">
+      <meta itemprop="description" content="科学技术才是第一生产力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔法学院">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Spring Cloud Config
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-12-02 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-02T00:00:00+08:00">2019-12-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Cloud/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Cloud</span>
+                  </a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>为了方便各服务的配置文件统一管理，需要分布式配置中心组件。在spring cloud中有spring cloud config组件用于统一配置，它支持配置文件加载在内存中，也支持远程git仓库配置。在组件中，分为配置的服务者和消费者。</p>
+<a id="more"></a>
+<h3 id="config-server"><a href="#config-server" class="headerlink" title="config server"></a>config server</h3><p>构建config server，引入依赖</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;project xmlns&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;POM&#x2F;4.0.0&quot; xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot;</span><br><span class="line">         xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;POM&#x2F;4.0.0 https:&#x2F;&#x2F;maven.apache.org&#x2F;xsd&#x2F;maven-4.0.0.xsd&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;modelVersion&gt;4.0.0&lt;&#x2F;modelVersion&gt;</span><br><span class="line"></span><br><span class="line">    &lt;parent&gt;</span><br><span class="line">        &lt;groupId&gt;pers.hogwarts&lt;&#x2F;groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;cloud&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;version&gt;1.0-SNAPSHOT&lt;&#x2F;version&gt;</span><br><span class="line">    &lt;&#x2F;parent&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &lt;artifactId&gt;cloud-config-server&lt;&#x2F;artifactId&gt;</span><br><span class="line">    &lt;version&gt;0.0.1-SNAPSHOT&lt;&#x2F;version&gt;</span><br><span class="line">    &lt;name&gt;cloud-config-server&lt;&#x2F;name&gt;</span><br><span class="line">    &lt;description&gt;Demo project for Spring Boot&lt;&#x2F;description&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependencies&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.springframework.cloud&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;spring-cloud-config-server&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line">    &lt;&#x2F;dependencies&gt;</span><br><span class="line"></span><br><span class="line">&lt;&#x2F;project&gt;</span><br></pre></td></tr></table></figure>
+
+
+<p>在启动类程序加上@EnableConfigServer注解开启配置服务器功能，由于是注册到Eureka，所有还要加上@EnableEurekaClient注解。</p>
+<p>在配置文件加上以下配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">server:</span><br><span class="line">  port: 8768</span><br><span class="line">spring:</span><br><span class="line">  application:</span><br><span class="line">    name: config-server</span><br><span class="line">  cloud:</span><br><span class="line">    config:</span><br><span class="line">      # 远程仓库分支</span><br><span class="line">      label: master</span><br><span class="line">      server:</span><br><span class="line">        git:</span><br><span class="line">          searchPaths:  # 配置仓库路径   respo</span><br><span class="line">          uri: https:&#x2F;&#x2F;github.com&#x2F;LinXiuke&#x2F;cloud&#x2F;</span><br><span class="line">          # 公开仓库不需要账号密码</span><br><span class="line">          username:</span><br><span class="line">          password:</span><br><span class="line"></span><br><span class="line">eureka:</span><br><span class="line">  client:</span><br><span class="line">    serviceUrl:</span><br><span class="line">      defaultZone: http:&#x2F;&#x2F;localhost:8761&#x2F;eureka&#x2F;</span><br></pre></td></tr></table></figure>
+
+<p>我们需要在仓库建立一个config-client-dev的文件作为 config client的配置文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app_name: config-client</span><br></pre></td></tr></table></figure>
+
+<p>http请求地址和资源路径的映射：</p>
+<ul>
+<li>/{application}/{profile}/{label}</li>
+<li>/{label}/{application}-{profile}. (yml/properties)</li>
+</ul>
+<ol>
+<li>分支名可以省略，默认是master分支</li>
+<li>无论你的配置文件是properties，还是yml，只要是应用名+环境名能匹配到这个配置文件，那么就能取到</li>
+<li>如果文件名含有多个“-”，则以最后一个“-”分割{application}和{profile}，若文件名为：my-app-demo-dev.properties，则映射的url为”/my-app-demo/dev”</li>
+</ol>
+<p>浏览器输入  <a href="http://localhost:8768/config-client/dev" target="_blank" rel="noopener">http://localhost:8768/config-client/dev</a>   显示文件详情</p>
+<blockquote>
+<p>{“name”:”config-client”,”profiles”:[“dev”],”label”:”master”,”version”:”1554c6e855dfd876f8bc7757ef473782ffd0cd2b”,”state”:null,”propertySources”:[{“name”:”<a href="https://github.com/LinXiuke/cloud//config-client-dev.yml&quot;,&quot;source&quot;:{&quot;app_name&quot;:&quot;config-client&quot;}}]}">https://github.com/LinXiuke/cloud//config-client-dev.yml&quot;,&quot;source&quot;:{&quot;app_name&quot;:&quot;config-client&quot;}}]}</a></p>
+</blockquote>
+<p><a href="http://localhost:8768/config-client-dev.yml" target="_blank" rel="noopener">http://localhost:8768/config-client-dev.yml</a>  显示配置内容</p>
+<blockquote>
+<p>app_name: config-client</p>
+</blockquote>
+<p>输入 <a href="http://localhost:8768/app_name/dev" target="_blank" rel="noopener">http://localhost:8768/app_name/dev</a>   可以直接获取单个配置信息：</p>
+<blockquote>
+<p>{“name”:”app_name”,”profiles”:[“dev”],”label”:null,”version”:”1554c6e855dfd876f8bc7757ef473782ffd0cd2b”,”state”:null,”propertySources”:[]}</p>
+</blockquote>
+<h3 id="config-client"><a href="#config-client" class="headerlink" title="config client"></a>config client</h3><p>构建config client，引入依赖</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;project xmlns&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;POM&#x2F;4.0.0&quot; xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot;</span><br><span class="line">         xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;POM&#x2F;4.0.0 https:&#x2F;&#x2F;maven.apache.org&#x2F;xsd&#x2F;maven-4.0.0.xsd&quot;&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &lt;modelVersion&gt;4.0.0&lt;&#x2F;modelVersion&gt;</span><br><span class="line"></span><br><span class="line">    &lt;parent&gt;</span><br><span class="line">        &lt;groupId&gt;pers.hogwarts&lt;&#x2F;groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;cloud&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;version&gt;1.0-SNAPSHOT&lt;&#x2F;version&gt;</span><br><span class="line">    &lt;&#x2F;parent&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &lt;artifactId&gt;cloud-config-client&lt;&#x2F;artifactId&gt;</span><br><span class="line">    &lt;version&gt;0.0.1-SNAPSHOT&lt;&#x2F;version&gt;</span><br><span class="line">    &lt;name&gt;cloud-config-client&lt;&#x2F;name&gt;</span><br><span class="line">    &lt;description&gt;Demo project for Spring Boot&lt;&#x2F;description&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependencies&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.springframework.cloud&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;spring-cloud-starter-config&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line">    &lt;&#x2F;dependencies&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&#x2F;project&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>配置文件如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">#spring.application.name&#x3D;config-client</span><br><span class="line">## 远程仓库分支</span><br><span class="line">#spring.cloud.config.label&#x3D;master</span><br><span class="line">## 选择config-client-dev文件</span><br><span class="line">#spring.cloud.config.profile&#x3D;dev</span><br><span class="line">## 指明配置服务中心的网址</span><br><span class="line">#spring.cloud.config.uri&#x3D; http:&#x2F;&#x2F;localhost:8768&#x2F;</span><br><span class="line">#server.port&#x3D;8791</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 注册中心配置</span><br><span class="line">spring.application.name&#x3D;config-client</span><br><span class="line">spring.cloud.config.label&#x3D;master</span><br><span class="line">spring.cloud.config.profile&#x3D;dev</span><br><span class="line"></span><br><span class="line">eureka.client.serviceUrl.defaultZone&#x3D;http:&#x2F;&#x2F;localhost:8761&#x2F;eureka&#x2F;</span><br><span class="line">spring.cloud.config.discovery.enabled&#x3D;true</span><br><span class="line">spring.cloud.config.discovery.serviceId&#x3D;config-server</span><br><span class="line">server.port&#x3D;8791</span><br></pre></td></tr></table></figure>
+
+<p>加上@EnableEurekaClient注解注册到Eureka。</p>
+<h3 id="读取配置"><a href="#读取配置" class="headerlink" title="读取配置"></a>读取配置</h3><p>进行读取文件的验证测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">@EnableEurekaClient</span><br><span class="line">@SpringBootApplication</span><br><span class="line">@RestController</span><br><span class="line">public class CloudConfigClientApplication &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        SpringApplication.run(CloudConfigClientApplication.class, args);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Value(&quot;$&#123;app_name&#125;&quot;)</span><br><span class="line">    private String appName;</span><br><span class="line"></span><br><span class="line">    @GetMapping(&quot;&#x2F;getAppName&quot;)</span><br><span class="line">    public String getAppName() &#123;</span><br><span class="line">        return appName;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<p>浏览器输入 <a href="http://localhost:8791/getAppName，显示" target="_blank" rel="noopener">http://localhost:8791/getAppName，显示</a></p>
+<blockquote>
+<p>config-client</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%95%99%E7%A8%8B/" rel="tag"># 教程</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+                <a href="/2019/11/19/Spring%20Boot/Spring%20Boot%20DataSource/" rel="next" title="Spring Boot 配置多数据源和动态数据源">
+                  <i class="fa fa-chevron-left"></i> Spring Boot 配置多数据源和动态数据源
+                </a>
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+                <a href="/2019/12/02/Spring%20Cloud/Eureka/" rel="prev" title="Spring Cloud Eureka">
+                  Spring Cloud Eureka <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#config-server"><span class="nav-number">2.</span> <span class="nav-text">config server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#config-client"><span class="nav-number">3.</span> <span class="nav-text">config client</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#读取配置"><span class="nav-number">4.</span> <span class="nav-text">读取配置</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <img class="site-author-image" itemprop="image" alt="linxk"
+    src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">linxk</p>
+  <div class="site-description" itemprop="description">科学技术才是第一生产力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">linxk</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">106k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.4.2
+  </div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

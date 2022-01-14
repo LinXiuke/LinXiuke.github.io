@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.4.2',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="多数据源在项目中有时候需要同时连接多个数据库，这些数据库可能是各不相同的，这个时候就要去配置多数据源。 用spring boot 配置jpa的多数据源，首先要在配置文件中添加相关数据库配置">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Boot 配置多数据源和动态数据源">
+<meta property="og:url" content="https://github.com/2019/11/19/Spring%20Boot/Spring%20Boot%20DataSource/index.html">
+<meta property="og:site_name" content="魔法学院">
+<meta property="og:description" content="多数据源在项目中有时候需要同时连接多个数据库，这些数据库可能是各不相同的，这个时候就要去配置多数据源。 用spring boot 配置jpa的多数据源，首先要在配置文件中添加相关数据库配置">
+<meta property="article:published_time" content="2019-11-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-14T14:55:53.420Z">
+<meta property="article:author" content="linxk">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/2019/11/19/Spring%20Boot/Spring%20Boot%20DataSource/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Spring Boot 配置多数据源和动态数据源 | 魔法学院</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">魔法学院</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">九又四分之三站台</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://github.com/2019/11/19/Spring%20Boot/Spring%20Boot%20DataSource/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="linxk">
+      <meta itemprop="description" content="科学技术才是第一生产力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔法学院">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Spring Boot 配置多数据源和动态数据源
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-11-19 00:00:00" itemprop="dateCreated datePublished" datetime="2019-11-19T00:00:00+08:00">2019-11-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring-Boot/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring Boot</span>
+                  </a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>8.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="多数据源"><a href="#多数据源" class="headerlink" title="多数据源"></a>多数据源</h3><p>在项目中有时候需要同时连接多个数据库，这些数据库可能是各不相同的，这个时候就要去配置多数据源。</p>
+<p>用spring boot 配置jpa的多数据源，首先要在配置文件中添加相关数据库配置</p>
+<a id="more"></a>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">spring:</span><br><span class="line">    datasource:</span><br><span class="line">        # 主要数据库</span><br><span class="line">        primary:</span><br><span class="line">            type: com.zaxxer.hikari.HikariDataSource</span><br><span class="line">            driver-class-name: com.mysql.jdbc.Driver</span><br><span class="line">            url: jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;base1?autoReconnect&#x3D;true&amp;useUnicode&#x3D;true&amp;characterEncoding&#x3D;utf8&amp;useSSL&#x3D;false</span><br><span class="line">            username: root</span><br><span class="line">            password: 123456</span><br><span class="line">        secondary:</span><br><span class="line">            # 次要要数据库</span><br><span class="line">            type: com.zaxxer.hikari.HikariDataSource</span><br><span class="line">            driver-class-name: com.mysql.jdbc.Driver</span><br><span class="line">            url: jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;base2?autoReconnect&#x3D;true&amp;useUnicode&#x3D;true&amp;characterEncoding&#x3D;utf8&amp;useSSL&#x3D;false</span><br><span class="line">            username: root</span><br><span class="line">            password: 123456</span><br></pre></td></tr></table></figure>
+
+<p>然后是DataSource配置类</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">public class DataSourceConfig &#123;</span><br><span class="line"></span><br><span class="line">    @Primary</span><br><span class="line">    @Bean(&quot;primaryDataSource&quot;)</span><br><span class="line">    @Qualifier(&quot;primaryDataSource&quot;)</span><br><span class="line">    @ConfigurationProperties(prefix &#x3D; &quot;spring.datasource.primary&quot;)</span><br><span class="line">    public DataSource primaryDS() &#123;</span><br><span class="line">        return DataSourceBuilder.create().build();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Bean(&quot;secondaryDataSource&quot;)</span><br><span class="line">    @Qualifier(&quot;secondaryDataSource&quot;)</span><br><span class="line">    @ConfigurationProperties(prefix &#x3D; &quot;spring.datasource.secondary&quot;)</span><br><span class="line">    public DataSource secondaryDS() &#123;</span><br><span class="line">        return DataSourceBuilder.create().build();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>@ConfigurationProperties注解的prefix对应的就是配置文件里各自的数据库</p>
+<p>DataSource配置好后还有有关于单个数据库的配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">@EnableTransactionManagement  &#x2F;&#x2F;开启数据库事务</span><br><span class="line">@EnableJpaRepositories(entityManagerFactoryRef &#x3D; &quot;primaryEntityManagerFactory&quot;, transactionManagerRef &#x3D;</span><br><span class="line">        &quot;primaryTransactionManager&quot;, basePackages &#x3D; &#123;&quot;com.xxx.primary.dao  （DAO文件目录） &quot;&#125;)</span><br><span class="line">public class PrimaryRepositoryConfig &#123;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private JpaProperties jpaProperties;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    @Qualifier(&quot;primaryDataSource&quot;)</span><br><span class="line">    private DataSource primaryDataSource;</span><br><span class="line"></span><br><span class="line">    @Bean(name &#x3D; &quot;primaryEntityManager&quot;)</span><br><span class="line">    public EntityManager entityManager(EntityManagerFactoryBuilder builder) &#123;</span><br><span class="line">        return entityManagerFactoryPrimary(builder).getObject().createEntityManager();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Bean(name &#x3D; &quot;primaryEntityManagerFactory&quot;)</span><br><span class="line">    public LocalContainerEntityManagerFactoryBean entityManagerFactoryPrimary(EntityManagerFactoryBuilder builder) &#123;</span><br><span class="line">        return builder.dataSource(primaryDataSource).properties(getVendorProperties(primaryDataSource))</span><br><span class="line">                .packages(&quot;com.xxx.primary.entity&quot;) &#x2F;&#x2F; 实体类目录</span><br><span class="line">                .persistenceUnit(&quot;persistenceUnit&quot;).build();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private Map&lt;String, String&gt; getVendorProperties(DataSource dataSource) &#123;</span><br><span class="line">        return jpaProperties.getHibernateProperties(dataSource);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; jpa事务配置</span><br><span class="line">    @Primary</span><br><span class="line">    @Bean(name &#x3D; &quot;primaryTransactionManager&quot;)</span><br><span class="line">    PlatformTransactionManager transactionManagerPrimary(EntityManagerFactoryBuilder builder) &#123;</span><br><span class="line">        return new JpaTransactionManager(entityManagerFactoryPrimary(builder).getObject());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>primary数据库的配置就这样完成了，secondary数据库的配置和primary是一样的。这样一来spring boot就能根据实体类和DAO所在目录自动连接数据库</p>
+<p>如果要使用mybatis作为持久化层框架的话，只需要额外配置mybatis的SQLSession</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">@Primary</span><br><span class="line">@Bean(&quot;primarySqlSessionFactory&quot;)</span><br><span class="line">public SqlSessionFactory sqlSessionFactory() &#123;</span><br><span class="line">    org.apache.ibatis.session.Configuration configuration &#x3D; new org.apache.ibatis.session.Configuration();</span><br><span class="line">    &#x2F;&#x2F;驼峰自动转换</span><br><span class="line">    configuration.setMapUnderscoreToCamelCase(true);</span><br><span class="line"></span><br><span class="line">    SqlSessionFactoryBean bean &#x3D; new SqlSessionFactoryBean();</span><br><span class="line">    bean.setDataSource(primaryDataSource);</span><br><span class="line">    bean.setConfiguration(configuration);</span><br><span class="line"></span><br><span class="line">    PageInterceptor pageInterceptor &#x3D; new PageInterceptor();</span><br><span class="line">    Properties properties &#x3D; new Properties();</span><br><span class="line">    properties.setProperty(&quot;helperDialect&quot;, &quot;mysql&quot;);</span><br><span class="line">    pageInterceptor.setProperties(properties);</span><br><span class="line">    Interceptor[] interceptors &#x3D; &#123;pageInterceptor&#125;;</span><br><span class="line">    bean.setPlugins(interceptors);</span><br><span class="line">    &#x2F;&#x2F;添加XML目录</span><br><span class="line">    ResourcePatternResolver resolver &#x3D; new PathMatchingResourcePatternResolver();</span><br><span class="line">    try &#123;</span><br><span class="line">        bean.setMapperLocations(resolver.getResources(&quot;classpath*:mybatis&#x2F;primary&#x2F;**&#x2F;*.xml&quot;)); &#x2F;&#x2F; xml文件目录</span><br><span class="line">        return bean.getObject();</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        throw new RuntimeException(e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>配置完后在改配置类加上mybatis扫描注解<br>@MapperScan(basePackages = {“com.xxx.primary.mapper”}, sqlSessionFactoryRef = “primarySqlSessionFactory”)</p>
+<h3 id="动态数据源"><a href="#动态数据源" class="headerlink" title="动态数据源"></a>动态数据源</h3><p>多数据源对实体类和DAO层所在目录有要求，而动态数据源则是根据你代码里做的选择在对数据库操作时动态地去切换数据库。一般来说使用动态数据源的各个数据库表大体一致，逻辑可以公用。比如一套系统多租户数据物理隔离使用不同数据库。</p>
+<p>配置文件和多数据源一样，配置类会有些不同</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">spring:</span><br><span class="line">    datasource:</span><br><span class="line">        # 主要数据库</span><br><span class="line">        1:</span><br><span class="line">            type: com.zaxxer.hikari.HikariDataSource</span><br><span class="line">            driver-class-name: com.mysql.jdbc.Driver</span><br><span class="line">            url: jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;base1?autoReconnect&#x3D;true&amp;useUnicode&#x3D;true&amp;characterEncoding&#x3D;utf8&amp;useSSL&#x3D;false</span><br><span class="line">            username: root</span><br><span class="line">            password: 123456</span><br><span class="line">        2:</span><br><span class="line">            # 次要要数据库</span><br><span class="line">            type: com.zaxxer.hikari.HikariDataSource</span><br><span class="line">            driver-class-name: com.mysql.jdbc.Driver</span><br><span class="line">            url: jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;base2?autoReconnect&#x3D;true&amp;useUnicode&#x3D;true&amp;characterEncoding&#x3D;utf8&amp;useSSL&#x3D;false</span><br><span class="line">            username: root</span><br><span class="line">            password: 123456</span><br></pre></td></tr></table></figure>
+
+
+
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">@ServletComponentScan</span><br><span class="line">@Configuration</span><br><span class="line">@EnableTransactionManagement &#x2F;&#x2F; 开启事务</span><br><span class="line">public class DataSourceConfig &#123;</span><br><span class="line">    @Primary</span><br><span class="line">    @Bean(name &#x3D; &quot;DataSource1&quot;)</span><br><span class="line">    @ConfigurationProperties(prefix &#x3D; &quot;spring.datasource.1&quot;)</span><br><span class="line">    public DataSource primaryDataSource() &#123;</span><br><span class="line">        DruidDataSource dataSource &#x3D; DruidDataSourceBuilder.create().build();</span><br><span class="line">        dataSource.setName(&quot;userDataSource&quot;);</span><br><span class="line">        return dataSource;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Bean(name &#x3D; &quot;Datasource2&quot;)</span><br><span class="line">    @ConfigurationProperties(prefix &#x3D; &quot;spring.datasource.2&quot;)</span><br><span class="line">    public DataSource secondaryDatasource() &#123;</span><br><span class="line">        return DruidDataSourceBuilder.create().build();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    @Bean(&quot;dynamicDataSource&quot;)</span><br><span class="line">    public DataSource dynamicDataSource() &#123;</span><br><span class="line">        DynamicDataSource dynamicDataSource &#x3D; new DynamicDataSource();</span><br><span class="line">        &#x2F;&#x2F;默认数据源</span><br><span class="line">        dynamicDataSource.setDefaultTargetDataSource(primaryDataSource());</span><br><span class="line">        Map&lt;Object, Object&gt; dataSourceMap &#x3D; new HashMap&lt;&gt;();</span><br><span class="line">        dataSourceMap.put(&quot;1&quot;, primaryDataSource());</span><br><span class="line">        dataSourceMap.put(&quot;2&quot;, secondaryDatasource());</span><br><span class="line">        dynamicDataSource.setTargetDataSources(dataSourceMap);</span><br><span class="line">        return dynamicDataSource;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Bean(name &#x3D; &quot;sqlSessionFactory&quot;)</span><br><span class="line">    @Qualifier(&quot;sqlSessionFactory&quot;)</span><br><span class="line">    @ConfigurationProperties(prefix &#x3D; &quot;mybatis&quot;)</span><br><span class="line">    public SqlSessionFactory sqlSessionFactory() throws Exception &#123;</span><br><span class="line">        SqlSessionFactoryBean sqlSessionFactoryBean &#x3D; new SqlSessionFactoryBean();</span><br><span class="line">        org.apache.ibatis.session.Configuration configuration &#x3D; new org.apache.ibatis.session.Configuration();</span><br><span class="line">        &#x2F;&#x2F;驼峰自动转换</span><br><span class="line">        configuration.setMapUnderscoreToCamelCase(true);</span><br><span class="line">        sqlSessionFactoryBean.setConfiguration(configuration);</span><br><span class="line">        sqlSessionFactoryBean.setTypeAliasesPackage(&quot;type-aliases-package&quot;);</span><br><span class="line">        sqlSessionFactoryBean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources(&quot;mapping&#x2F;*.xml&quot;));</span><br><span class="line">        sqlSessionFactoryBean.setDataSource(dynamicDataSource());</span><br><span class="line"></span><br><span class="line">        return sqlSessionFactoryBean.getObject();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Bean</span><br><span class="line">    public SqlSessionTemplate sqlSessionTemplate() throws Exception &#123;</span><br><span class="line">        return new SqlSessionTemplate(sqlSessionFactory());</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F; 事务</span><br><span class="line">    @Bean</span><br><span class="line">    public PlatformTransactionManager platformTransactionManager(</span><br><span class="line">            @Qualifier(&quot;dynamicDataSource&quot;) DataSource myDataSource) &#123;</span><br><span class="line">        return new DataSourceTransactionManager(myDataSource);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>Spring boot提供了AbstractRoutingDataSource 根据用户定义的规则选择当前的数据源，这样我们可以在执行查询之前，设置使用的数据源。实现可动态路由的数据源，在每次数据库查询操作前执行。它的抽象方法 determineCurrentLookupKey() 决定使用哪个数据源。</p>
+<p>在程序运行时，把数据源数据源通过 AbstractRoutingDataSource 动态织入到程序中，灵活的进行数据源切换</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">public class DynamicDataSource extends AbstractRoutingDataSource &#123;</span><br><span class="line"></span><br><span class="line">    private static final Logger logger &#x3D; LoggerFactory.getLogger(DynamicDataSource.class);</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected Object determineCurrentLookupKey() &#123;</span><br><span class="line">        logger.info(&quot;-------------------Current DataSource is [&#123;&#125;]----------------&quot;, DataSourceHolder.getDataSource());</span><br><span class="line">        return DataSourceHolder.getDataSource();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">public class DataSourceHolder &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private static final ThreadLocal&lt;String&gt; dataSources &#x3D; new ThreadLocal&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    public static void setDataSource(String customerType) &#123;</span><br><span class="line">        dataSources.set(customerType);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static String getDataSource() &#123;</span><br><span class="line">        return dataSources.get();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void clearDataSource() &#123;</span><br><span class="line">        dataSources.remove();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样一来，就可以在代码中通过修改DataSourceHolder的dataSources来动态地修改数据源</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+                <a href="/2019/11/06/JVM/ClassLoader/" rel="next" title="类加载器">
+                  <i class="fa fa-chevron-left"></i> 类加载器
+                </a>
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+                <a href="/2019/12/02/Spring%20Cloud/config/" rel="prev" title="Spring Cloud Config">
+                  Spring Cloud Config <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#多数据源"><span class="nav-number">1.</span> <span class="nav-text">多数据源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#动态数据源"><span class="nav-number">2.</span> <span class="nav-text">动态数据源</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <img class="site-author-image" itemprop="image" alt="linxk"
+    src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">linxk</p>
+  <div class="site-description" itemprop="description">科学技术才是第一生产力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">linxk</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">106k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.4.2
+  </div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
