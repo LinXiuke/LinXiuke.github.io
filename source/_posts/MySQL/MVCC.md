@@ -2,7 +2,7 @@
 
 title: InnoDB-MVCC
 
-date: 2020-11-14
+date: 2022-11-14
 
 categories:
 - MySQL
@@ -11,7 +11,7 @@ categories:
 
 MVCC机制的全称为Multi-Version Concurrency Control，即多版本并发控制技术， 主要是为了提升数据库并发性能而设计的，其中采用更好的方式处理了读-写并发冲突，做到即使有读写冲突时，也可以不加锁解决，从而确保了任何时刻的读操作都是非阻塞的。
 
-\<!--more-->
+<!--more-->
 
 ## MVCC机制的组成
 
