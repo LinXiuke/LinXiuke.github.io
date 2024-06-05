@@ -1,12 +1,10 @@
 ---
-
 title: InnoDB-MVCC
 
-date: 2022-11-14
+date: 2020-11-14
 
 categories:
 - MySQL
-
 ---
 
 MVCC机制的全称为Multi-Version Concurrency Control，即多版本并发控制技术， 主要是为了提升数据库并发性能而设计的，其中采用更好的方式处理了读-写并发冲突，做到即使有读写冲突时，也可以不加锁解决，从而确保了任何时刻的读操作都是非阻塞的。
@@ -59,17 +57,20 @@ Review的核心内容有四个：
 当前有两个事务T1和T2，T1正在修改ID=1的数据，而T2要查询这条数据，怎么判断T2能否读取到最新数据：
 
 1.  当开始查询时，会生成一个ReadView
-2.  判断数据中DB\_*TRX*\_ID == ReadView\.creator\_trx\_id，相同则代表创建ReadView的事务和当前修改事务是同一个，**可以读取最新数据**
-3.  判断DB\_*TRX*\_ID >= ReadView\.low\_limit\_id，是，则说明修改数据的事务在创建ReadView后生成，**不能读取到最新数据**
-4.  ReadView\.up\*\_low\_id <= *DB\_*TRX\*\_ID < ReadView\.low\_limit\_id，判断DB\_*TRX\_ID是否在trx*\_ids中
+2.  判断隐藏列DB\_*TRX*\_ID == ReadView\.creator\_trx\_id，相同则代表创建ReadView的事务和当前修改事务是同一个，**能**读取最新数据
+3.  判断隐藏列DB\_*TRX*\_ID是否小于ReadView\.up\_limit\_id（最小活跃事务ID）
+    *   小于：修改数据的事务在快照创建前已结束，**能**读取最新数据
+    *   不小于：继续往下判断
+4.  判断隐藏列DB\_*TRX*\_ID是否小于ReadView\.low\_limit\_id（下一个事务ID）
 
-    *   在：修改数据的事务还在执行，**不能读取最新数据**
-    *   不在：修改事务的数据已结束，**可以读取最新数据**
-5.  DB\_*TRX*\_ID < ReadView\.up\_limit\_id（想了想到了判断这一步一定是小于的），是，则说明修改数据的事务在创建ReadView前已经提交，**可以读取最新数据**
+    *   大于等于：修改数据的事务在快照生成后开启，**不能**读取最新数据
+    *   小于：表明DB\_*TRX*\_ID在ReadView\.up\*\_limit\_id和之间，继续判断
+5.  判断隐藏列*DB\_*TRX\*\_ID*是否在trx*\_ids中
+
+    *   在：修改数据的事务还在执行，**不能**读取最新数据
+    *   不在：修改数据的事务已结束，**能**读取最新数据
 
 上述的345三点，可以把up\_limit\_id和low\_limit\_id看成*trx*\_ids的左右区间，DB\_*TRX*\_ID在区间左（不包含）可以读取最新数据，区间右（包含）不可以读取最新数据， 在区间内的，则判断DB\_*TRX*\_ID是否在*trx*\_ids内。
-
-之所以还要判断DB\_*TRX*\_ID是否在*trxids内，是因为如果有T3、T4、T5事务存在，当T3回滚，则trx*\_ids里不包含T3， 或当T5已提交，*trx*\_ids里不包含T5。
 
 ## 不同隔离级别下的MVCC
 
@@ -141,7 +142,7 @@ select * from user where id > 1;
 
 ```sql
 // 步骤3
- select * from user where id > 1 lock in share mode;
+select * from user where id > 1 lock in share mode;
 +----+------+
 | id | name |
 +----+------+
