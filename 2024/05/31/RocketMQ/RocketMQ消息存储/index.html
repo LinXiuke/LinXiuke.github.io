@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.4.2',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="RocketMQ存储的文件主要包括CommitLog文件、ConsumeQueue文件、Index文件。RocketMQ将所有主题的消息存储在同一个文件中，确保消息发送时按顺序写文件，尽最大能力确保消息发送的高性能与高吞吐量。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RocketMQ消息存储">
+<meta property="og:url" content="https://github.com/2024/05/31/RocketMQ/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/index.html">
+<meta property="og:site_name" content="霍格沃茨">
+<meta property="og:description" content="RocketMQ存储的文件主要包括CommitLog文件、ConsumeQueue文件、Index文件。RocketMQ将所有主题的消息存储在同一个文件中，确保消息发送时按顺序写文件，尽最大能力确保消息发送的高性能与高吞吐量。">
+<meta property="article:published_time" content="2024-05-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-06-05T13:02:28.534Z">
+<meta property="article:author" content="linxk">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/2024/05/31/RocketMQ/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>RocketMQ消息存储 | 霍格沃茨</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">霍格沃茨</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">九又四分之三站台</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://github.com/2024/05/31/RocketMQ/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="linxk">
+      <meta itemprop="description" content="科学技术才是第一生产力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="霍格沃茨">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RocketMQ消息存储
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-05-31 00:00:00" itemprop="dateCreated datePublished" datetime="2024-05-31T00:00:00+08:00">2024-05-31</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RocketMQ/" itemprop="url" rel="index">
+                    <span itemprop="name">RocketMQ</span>
+                  </a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>RocketMQ存储的文件主要包括CommitLog文件、ConsumeQueue文件、Index文件。RocketMQ将所有主题的消息存储在同一个文件中，确保消息发送时按顺序写文件，尽最大能力确保消息发送的高性能与高吞吐量。</p>
+<a id="more"></a>
+
+<ol>
+<li>CommitLog：消息存储，所有消息主题的消息都存储在CommitLog文件中。</li>
+<li>ConsumeQueue：消息消费队列，消息到达CommitLog文件后，将异步转发到ConsumeQueue文件中，供消息消费者消费。</li>
+<li>Index：消息索引，主要存储消息key与offset的对应关系。</li>
+</ol>
+<h2 id="CommitLog文件"><a href="#CommitLog文件" class="headerlink" title="CommitLog文件"></a>CommitLog文件</h2><p>RocketMQ的所有主题的消息全部写入CommitLog文件中，所有消息按照到达顺序依次追加到CommitLog文件中，消息一旦写入，不支持修改。</p>
+<p>RocketMQ会为每条消息引入一个身份标志：消息物理偏移量，即消息存储在文件的起始位置。也是有了物理偏移量的概念，CommitLog文件也是采用偏移量，例如第一个CommitLog文件为00000000000000000000，第二个文件为00000000001073741824。文件名长度为20位，左边补零，单个文件大小默认1GB。</p>
+<h2 id="ConsumeQueue文件"><a href="#ConsumeQueue文件" class="headerlink" title="ConsumeQueue文件"></a>ConsumeQueue文件</h2><p>消息消费模型是基于主题订阅机制的，即一个消费组是消费特定主题的消息，根据主题从CommitLog文件中检索消息，效率会很低，为了解决基于topic的消息检索问题，RocketMQ引入了ConsumeQueue文件。</p>
+<p>ConsumeQueue文件是消息消费队列文件，是CommitLog文件基于topic的索引文件，主要用于消费者根据topic消费消息，其组织文件方式为/topic/queue/file三层组织结构，具体存储路径为$HOME/store/consumequeue/{topic}/{queueId}/{fileName}，同一个队列中存在多个消息文件。ConsumeQueue每个条目长度固定（8字节CommitLog物理偏移量，4字节消息长度，8字节tag哈希码）</p>
+<p>消费者根据topic、消息消费进度（ConsumeQueue逻辑偏移量），即第几个ConsumeQueue条目，这样的消费进度去访问消息，通过逻辑偏移量logicOffset*20，即可找知道该条目的起始偏移量（ConsumeQueue文件中的偏移量），然后读取该偏移量后20字节即可得到一个条目，无须遍历ConsumeQueue文件。</p>
+<h2 id="Index文件"><a href="#Index文件" class="headerlink" title="Index文件"></a>Index文件</h2><p>RocketMQ支持按消息熟悉检索消息，引入了ConsumeQueue文件解决了基于topic查找消息的问题，但如果想基于消息的某一个熟悉进行查找，ConsumeQueue就做不到了。所以RocketMQ有引入了Index索引文件，实现基于文件的哈希索引。</p>
+<p>Index文件基于物理磁盘文件实现哈希索引。Index文件由40字节的文件头，500万个哈希槽、2000万个Index条目组成，每个哈希槽4字节、每个Index条目含有20个字节，分别为4字节索引key的哈希码、8字节消息物理偏移量、4字节时间戳、4字节的前一个Index条目（哈希冲突的链表结构）。</p>
+<h2 id="内存映射"><a href="#内存映射" class="headerlink" title="内存映射"></a>内存映射</h2><p>RocketMQ为了提升消息写入效率，引入了内存映射，将磁盘文件映射到内存中，一操作内存的方式操作磁盘。</p>
+<p>在Java中可以通过FileChannel的map方法创建内存映射文件。在Linux服务器由该方法创建的文件使用的就是操作系统的页缓存（pagecache）。如果RocketMQ Broker进程异常退出，存储在页缓存的数据不会丢失，操作系统会定时将页缓存的数据持久化到磁盘，不过如果是机器断电等异常情况数据还是可能丢失。</p>
+<h2 id="刷盘策略"><a href="#刷盘策略" class="headerlink" title="刷盘策略"></a>刷盘策略</h2><p>引入了内存映射和页缓存机制后，消息会先写入页缓存，此时还没有真正持久化。那么Broker收到消息后，是存储到页缓存就直接返回成功还是要持久化到磁盘裁返回成功。为此，RocketMQ提供了两种策略：同步刷盘、异步刷盘。</p>
+<ul>
+<li>同步刷盘：保证消息不丢失，但是写入性能会较低。</li>
+<li>异步刷盘：效率更高，消息丢失的可能性也小。Broker将消息存储到pagecache后就立即返回成功，然后开启一个异步线程定时执行FileChannel的force方法，将内存的数据定时写入磁盘，默认间隔时间500ms。</li>
+</ul>
+<h2 id="transientStorePoolEnable机制"><a href="#transientStorePoolEnable机制" class="headerlink" title="transientStorePoolEnable机制"></a>transientStorePoolEnable机制</h2><p>transientStorePoolEnable机制，即内存级别的读写分离机制。RocketMQ把消息写入pagecache，消息消费时从pagecache中读取，在高并发时pagecache压力会比较大，容易出现broker busy异常。RocketMQ通过这种机制，先把消息写入堆外内存并立即返回，然后异步将堆外内存中的数据提交到pagecache，再异步刷盘到磁盘中。因为堆外内存数据并未提交，所以消息消费时不会从这里读取，而是从pagecache读取，这样就实现了内存级别的读写分离。</p>
+<p>这种机制的有点事实现了批量化的消息写入，缺点是如果broker进程异常退出，堆外内存数据会丢失。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+                <a href="/2022/11/23/MySQL/InnoDB%E9%94%81/" rel="next" title="InnoDB锁">
+                  <i class="fa fa-chevron-left"></i> InnoDB锁
+                </a>
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+                <a href="/2024/06/06/RocketMQ/NameServer/" rel="prev" title="NameServer">
+                  NameServer <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CommitLog文件"><span class="nav-number">1.</span> <span class="nav-text">CommitLog文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ConsumeQueue文件"><span class="nav-number">2.</span> <span class="nav-text">ConsumeQueue文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Index文件"><span class="nav-number">3.</span> <span class="nav-text">Index文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内存映射"><span class="nav-number">4.</span> <span class="nav-text">内存映射</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#刷盘策略"><span class="nav-number">5.</span> <span class="nav-text">刷盘策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#transientStorePoolEnable机制"><span class="nav-number">6.</span> <span class="nav-text">transientStorePoolEnable机制</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <img class="site-author-image" itemprop="image" alt="linxk"
+    src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">linxk</p>
+  <div class="site-description" itemprop="description">科学技术才是第一生产力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">linxk</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">116k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:45</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.4.2
+  </div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
